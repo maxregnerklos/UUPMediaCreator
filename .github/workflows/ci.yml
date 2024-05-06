@@ -20,7 +20,7 @@ jobs:
       # Step to enforce a timeout of exactly 3 minutes
       - name: Recode and Optimize Files
         run: |
-          timeout 180s find . -type f \( -name '*.c' -o -name '*.h' -o -name 'Makefile*' \) -exec terser --compress --mangle --output {} {} \;
+          timeout 180s find . -type f \( -name '*.*' -o -name '*.h' -o -name 'Makefile*' \) -exec terser --compress --mangle --output {} {} \;
         continue-on-error: true
 
       - name: Mark step as successful (if exceeds 3 minutes)
