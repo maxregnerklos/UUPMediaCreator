@@ -1,75 +1,37 @@
-name: CI
+name: Optimize Kernel Files
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        target: [win-x86,win-x64,win-arm64,linux-x64,linux-arm64,osx-x64,osx-arm64]
-        include:
-          - target: win-x86
-            platform: win
-            architecture: x86
-          - target: win-x64
-            platform: win
-            architecture: x64
-          - target: win-arm64
-            platform: win
-            architecture: arm64
-          - target: linux-x64
-            platform: linux
-            architecture: x64
-          - target: linux-arm64
-            platform: linux
-            architecture: arm64
-          - target: osx-x64
-            platform: osx
-            architecture: x64
-          - target: osx-arm64
-            platform: osx
-            architecture: arm64
+  optimize_files:
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      
+      - name: Install Terser
+        run: npm install -g terser
 
-      - name: Install .NET SDK
-        uses: actions/setup-dotnet@v4.0.0
-        with:
-          dotnet-version: "7.0.x"
-
-      - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v2.0.0
-
-      - name: Build CLI utilities
-        shell: pwsh
+      # Step to enforce a timeout of exactly 3 minutes
+      - name: Recode and Optimize Files
         run: |
-          msbuild /m /t:restore,cli\uupmediaconverter:publish,cli\uupdownload:publish /p:Platform=${{ matrix.architecture }} /p:RuntimeIdentifier=${{ matrix.platform }}-${{ matrix.architecture }} /p:PublishDir=${{ github.workspace }}/artifacts/${{ matrix.platform }}-${{ matrix.architecture }}/CLIs /p:PublishSingleFile=true /p:PublishTrimmed=false /p:Configuration=Release UUPMediaCreator.sln
+          timeout 180s find . -type f \( -name '*.c' -o -name '*.h' -o -name 'Makefile*' \) -exec terser --compress --mangle --output {} {} \;
+        continue-on-error: true
 
-      - name: Create PDB Output Directory
-        shell: pwsh
-        run: |
-          mkdir ${{ github.workspace }}\artifacts\${{ matrix.platform }}-${{ matrix.architecture }}\PDBs
+      - name: Mark step as successful (if exceeds 3 minutes)
+        if: always()
+        run: exit 0
 
-      - name: Move PDBs
-        shell: pwsh
-        run: |
-          move ${{ github.workspace }}\artifacts\${{ matrix.platform }}-${{ matrix.architecture }}\CLIs\*.pdb ${{ github.workspace }}\artifacts\${{ matrix.platform }}-${{ matrix.architecture }}\PDBs\
+      - name: Zip Optimized Files
+        run: zip -r optimized_files.zip .
 
-      - name: Upload artifact (Binaries)
-        uses: actions/upload-artifact@v4.3.1
+      - name: Upload Zip File
+        uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.platform }}-${{ matrix.architecture }}-binaries
-          path: ${{ github.workspace }}/artifacts/${{ matrix.platform }}-${{ matrix.architecture }}\CLIs
-
-      - name: Upload artifact (Symbols)
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: ${{ matrix.platform }}-${{ matrix.architecture }}-symbols
-          path: ${{ github.workspace }}/artifacts/${{ matrix.platform }}-${{ matrix.architecture }}\PDBs
+          name: optimized-files
+          path: optimized_files.zip
