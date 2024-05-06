@@ -53,8 +53,7 @@ namespace UUPDownload.DownloadRequest
                 opts.Password,
                 opts.OutputFolder,
                 opts.Language,
-                opts.Edition,
-                opts.IncludeMergedUI).Wait();
+                opts.Edition).Wait();
         }
 
         internal static void ParseReplayOptions(DownloadReplayOptions opts)
@@ -178,8 +177,7 @@ namespace UUPDownload.DownloadRequest
                     string Password,
                     string OutputFolder,
                     string Language,
-                    string Edition,
-                    bool IncludeMergedUI)
+                    string Edition)
         {
             Logging.Log("Checking for updates...");
 
@@ -214,7 +212,7 @@ namespace UUPDownload.DownloadRequest
                     Logging.Log("Title: " + update.Xml.LocalizedProperties.Title);
                     Logging.Log("Description: " + update.Xml.LocalizedProperties.Description);
 
-                    await ProcessUpdateAsync(update, OutputFolder, MachineType, Language, Edition, IncludeMergedUI, true);
+                    await ProcessUpdateAsync(update, OutputFolder, MachineType, Language, Edition, true);
                 }
             }
             Logging.Log("Completed.");
@@ -224,7 +222,7 @@ namespace UUPDownload.DownloadRequest
             }
         }
 
-        private static async Task ProcessUpdateAsync(UpdateData update, string pOutputFolder, MachineType MachineType, string Language = "", string Edition = "", bool IncludeMergedUI = false, bool WriteMetadata = true)
+        private static async Task ProcessUpdateAsync(UpdateData update, string pOutputFolder, MachineType MachineType, string Language = "", string Edition = "", bool WriteMetadata = true)
         {
             string buildstr = "";
             IEnumerable<string> languages = null;
@@ -313,7 +311,7 @@ namespace UUPDownload.DownloadRequest
                 }
             }*/
 
-            _ = await UnifiedUpdatePlatform.Services.WindowsUpdate.Downloads.UpdateUtils.ProcessUpdateAsync(update, pOutputFolder, MachineType, new ReportProgress(), Language, Edition, IncludeMergedUI, WriteMetadata);
+            _ = await UnifiedUpdatePlatform.Services.WindowsUpdate.Downloads.UpdateUtils.ProcessUpdateAsync(update, pOutputFolder, MachineType, new ReportProgress(), Language, Edition, WriteMetadata);
         }
     }
 }
